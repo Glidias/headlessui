@@ -69,7 +69,7 @@ export interface TransitionEvents {
   beforeEnter?: () => void
   afterEnter?: () => void
   beforeLeave?: () => void
-  afterLeave?: () => void
+  afterLeave?: () => void | number
 }
 
 type TransitionChildProps<TTag> = Props<TTag, TransitionChildRenderPropArg> &
@@ -314,9 +314,17 @@ let TransitionChild = forwardRefWithAs(function TransitionChild<
             // When we don't have children anymore we can safely unregister from the parent and hide
             // ourselves.
             if (!hasChildren(nesting)) {
-              setState(TreeStates.Hidden)
-              unregister.current(id)
-              events.current.afterLeave()
+              let leaveRes = events.current.afterLeave();
+              if (typeof leaveRes === "number") {
+                setTimeout(()=> {
+                  setState(TreeStates.Hidden)
+                  unregister.current(id)
+                }, leaveRes as number); 
+              } else {
+                setState(TreeStates.Hidden)
+                unregister.current(id)
+              }
+              
             }
           }
         )
